@@ -48,7 +48,7 @@ Pastikan sudah terinstall:
 ### 2. Clone Repository
 
 ```bash
-git clone https://github.com/username-anda/pos-umkm.git
+git clone [https://github.com/username-anda/pos-umkm.git](https://github.com/belpythons/posita.git)
 cd pos-umkm
 
 ```
