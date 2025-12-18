@@ -1,5 +1,3 @@
-Berikut adalah isi detail lengkap untuk file `README.md` Anda. Anda bisa langsung menyalin teks di bawah ini ke dalam file `README.md` di repositori Git Anda.
-
 ---
 
 # 🏪 Aplikasi POS Konsinyasi UMKM (Web Apps)
