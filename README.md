@@ -1,7 +1,5 @@
 # POSITA - Point of Sales for UMKM Retailers
 
-![POSITA Banner](public/placeholder-logo.png)
-
 **POSITA** adalah aplikasi Kasir (Point of Sales) modern yang dirancang khusus untuk membantu UMKM retail mengelola penjualan, stok konsinyasi, dan pelaporan harian. Aplikasi ini dibangun dengan arsitektur **Modern Monolith** yang memisahkan logika operasional kasir (Frontend) dan manajemen pusat (Admin Panel).
 
 ## 🛠️ Tech Stack
@@ -213,12 +211,3 @@ Gunakan akun berikut untuk pengujian sistem (dibuat oleh Seeder):
 * *Fitur:* Buka Toko, Transaksi, Tutup Toko.
 
 ---
-
-## 🧪 Menjalankan Testing
-
-Untuk memastikan fitur autentikasi dan role berjalan dengan baik:
-
-```bash
-php artisan test
-
-```
