@@ -16,109 +16,67 @@ class PosController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('Pos/Dashboard');
+        return Inertia::render('Pos/Dashboard', new \App\ViewModels\PosDashboardViewModel());
     }
 
     /**
-     * Show form to open shop (start daily consignments).
+     * Show form to open shop (start daily session).
      */
     public function createOpen(): Response
     {
-        $partners = Partner::where('is_active', true)->get();
-
-        return Inertia::render('Pos/OpenShop', [
-            'partners' => $partners,
-        ]);
+        return Inertia::render('Pos/OpenShop');
     }
 
     /**
-     * Store new daily consignments.
+     * Store new daily shop session (Start Shop).
      */
-    public function storeOpen(Request $request)
+    public function store(Request $request, \App\Actions\Consignment\StartDailyShopAction $startDailyShopAction)
     {
         $validated = $request->validate([
-            'partner_id' => 'required|exists:partners,id',
-            'product_name' => 'required|string|max:255',
-            'initial_stock' => 'required|integer|min:0',
-            'base_price' => 'required|numeric|min:0',
-            'markup' => 'required|integer|min:0', // assuming markup is percentage e.g. 10 for 10%
+            'start_cash' => 'required|numeric|min:0',
         ]);
 
-        $basePrice = $validated['base_price'];
-        $markupPercent = $validated['markup'];
-
-        // selling_price = base_price + (base_price * markup / 100)
-        $sellingPrice = $basePrice + ($basePrice * $markupPercent / 100);
-
-        DailyConsignment::create([
-            'date' => now(), // or $request->date if we allow backdating
-            'partner_id' => $validated['partner_id'],
-            'product_name' => $validated['product_name'],
-            'initial_stock' => $validated['initial_stock'],
-            'base_price' => $basePrice,
-            'markup_percentage' => $markupPercent,
-            'selling_price' => $sellingPrice,
-            'remaining_stock' => $validated['initial_stock'], // initially same as initial
-            'quantity_sold' => 0,
-            'total_revenue' => 0,
-            'total_profit' => 0,
-            'status' => 'open',
-            'input_by_user_id' => Auth::id(),
-        ]);
-
-        return redirect()->route('pos.dashboard')->with('success', 'Product added to daily supply.');
+        try {
+            $startDailyShopAction->execute($request->user(), $validated['start_cash']);
+            return redirect()->route('pos.dashboard')->with('success', 'Shop opened successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**
-     * Show form to close shop (reconcile daily consignments).
+     * Show form to close shop (reconcile daily session).
      */
     public function createClose(): Response
     {
-        // Get today's open consignments
-        $consignments = DailyConsignment::with('partner')
-            ->whereDate('date', now())
-            ->where('status', 'open')
-            ->get();
+        // We might want to pass current session data here using ViewModel or direct query
+        // For now preventing closing if not open is handled by UI or middleware ideally.
+        $session = DailyConsignment::where('input_by_user_id', Auth::id())
+            ->whereNull('closed_at')
+            ->whereNotNull('start_cash')
+            ->firstOrFail();
 
         return Inertia::render('Pos/CloseShop', [
-            'consignments' => $consignments,
+            'session' => $session,
         ]);
     }
 
     /**
-     * Update consignments for closing.
+     * Update (Close) daily shop session.
      */
-    public function updateClose(Request $request, DailyConsignment $dailyConsignment)
+    public function update(Request $request, DailyConsignment $dailyConsignment, \App\Actions\Consignment\CloseDailyShopAction $closeDailyShopAction)
     {
+        // Ensure we are closing the session record
+        if ($dailyConsignment->start_cash === null) {
+            abort(404, 'Not a shop session.');
+        }
+
         $validated = $request->validate([
-            'remaining_stock' => 'required|integer|min:0|lte:' . $dailyConsignment->initial_stock,
-            'disposition' => 'nullable|in:returned,donated',
+            'actual_cash' => 'required|numeric|min:0',
         ]);
 
-        $remainingStock = $validated['remaining_stock'];
-        $initialStock = $dailyConsignment->initial_stock;
-        $sellingPrice = $dailyConsignment->selling_price;
-        $basePrice = $dailyConsignment->base_price;
+        $closeDailyShopAction->execute($dailyConsignment, $validated['actual_cash']);
 
-        // quantity_sold = stok awal - sisa
-        $quantitySold = $initialStock - $remainingStock;
-
-        // revenue = terjual * harga jual
-        $revenue = $quantitySold * $sellingPrice;
-
-        // profit = terjual * (harga jual - modal)
-        // or (terjual * harga jual) - (terjual * modal)
-        $profit = $quantitySold * ($sellingPrice - $basePrice);
-
-        $dailyConsignment->update([
-            'remaining_stock' => $remainingStock,
-            'quantity_sold' => $quantitySold,
-            'total_revenue' => $revenue,
-            'total_profit' => $profit,
-            'status' => 'closed',
-            'disposition' => $request->disposition,
-        ]);
-
-        return redirect()->back()->with('success', 'Item reconciled successfully.');
+        return redirect()->route('pos.dashboard')->with('success', 'Shop closed successfully.');
     }
 }

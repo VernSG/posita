@@ -26,6 +26,9 @@ class DailyConsignment extends Model
         'disposition',
         'notes',
         'input_by_user_id',
+        'start_cash',
+        'actual_cash',
+        'closed_at',
     ];
 
     protected $casts = [
@@ -38,6 +41,9 @@ class DailyConsignment extends Model
         'quantity_sold' => 'integer',
         'total_revenue' => 'decimal:2',
         'total_profit' => 'decimal:2',
+        'start_cash' => 'decimal:2',
+        'actual_cash' => 'decimal:2',
+        'closed_at' => 'datetime',
     ];
 
     public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions

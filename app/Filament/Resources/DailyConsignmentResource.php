@@ -22,16 +22,20 @@ class DailyConsignmentResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\TextInput::make('start_cash')
+                    ->label('Start Cash (Open Shop)')
+                    ->numeric()
+                    ->helperText('Enter amount to start a new shop session.'),
+
                 Forms\Components\DatePicker::make('date')
+                    ->default(now())
                     ->required(),
                 Forms\Components\Select::make('partner_id')
                     ->relationship('partner', 'name'),
                 Forms\Components\TextInput::make('manual_partner_name'),
-                Forms\Components\TextInput::make('product_name')
-                    ->required(),
+                Forms\Components\TextInput::make('product_name'),
                 Forms\Components\TextInput::make('initial_stock')
-                    ->numeric()
-                    ->required(),
+                    ->numeric(),
                 Forms\Components\TextInput::make('base_price')
                     ->numeric()
                     ->prefix('$'),
@@ -56,6 +60,7 @@ class DailyConsignmentResource extends Resource
                         'open' => 'Open',
                         'closed' => 'Closed',
                     ])
+                    ->default('open')
                     ->required(),
                 Forms\Components\Select::make('disposition')
                     ->options([
@@ -66,9 +71,9 @@ class DailyConsignmentResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Select::make('input_by_user_id')
                     ->relationship('inputByUser', 'name')
+                    ->default(fn() => auth()->id())
                     ->required(),
-            ])
-            ->disabled(); // Make the entire form read-only
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -78,6 +83,9 @@ class DailyConsignmentResource extends Resource
                 Tables\Columns\TextColumn::make('date')
                     ->date()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('start_cash')
+                    ->money()
+                    ->label('Start Cash'),
                 Tables\Columns\TextColumn::make('partner.name')
                     ->label('Partner')
                     ->sortable(),
@@ -151,7 +159,7 @@ class DailyConsignmentResource extends Resource
     {
         return [
             'index' => Pages\ListDailyConsignments::route('/'),
-            // 'create' => Pages\CreateDailyConsignment::route('/create'), // Read-only, so no create
+            'create' => Pages\CreateDailyConsignment::route('/create'),
             'view' => Pages\ViewDailyConsignment::route('/{record}'),
         ];
     }
