@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyConsignment extends Model
 {
+    use \Spatie\Activitylog\Traits\LogsActivity;
+
     protected $fillable = [
         'date',
         'partner_id',
@@ -37,6 +39,13 @@ class DailyConsignment extends Model
         'total_revenue' => 'decimal:2',
         'total_profit' => 'decimal:2',
     ];
+
+    public function getActivitylogOptions(): \Spatie\Activitylog\LogOptions
+    {
+        return \Spatie\Activitylog\LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
+    }
 
     public function partner(): BelongsTo
     {
