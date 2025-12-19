@@ -38,7 +38,11 @@ class AuthenticatedSessionController extends Controller
             ->log('logged in');
 
         if ($request->user()->role === 'super_admin') {
-            return redirect()->intended(route('filament.admin.pages.dashboard', absolute: false));
+            return redirect()->intended('admin');
+        }
+
+        if ($request->user()->role === 'employee') {
+            return redirect()->intended('dashboard');
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
