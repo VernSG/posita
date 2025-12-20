@@ -14,11 +14,14 @@ const form = useForm({
     initial_stock: 0,
     base_price: 0,
     markup: 0,
+    start_cash: 0,
 });
 
 const submit = () => {
     form.post(route('pos.store'), {
         onSuccess: () => form.reset(),
+        onError: (errors) => {
+            console.error(errors);}
     });
 };
 </script>

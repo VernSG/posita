@@ -10,34 +10,33 @@ use Exception;
 class StartDailyShopAction
 {
     /**
-     * Start a new daily shop session.
-     *
-     * @param User $user
-     * @param float $startCash
-     * @return DailyConsignment
-     * @throws Exception
+     * Memproses input produk konsinyasi baru ke database.
      */
-    public function execute(User $user, float $startCash): DailyConsignment
+    public function execute(User $user, array $data): DailyConsignment
     {
-        // Check if user already has an active session
-        $activeSession = DailyConsignment::where('input_by_user_id', $user->id)
-            ->whereNull('closed_at')
-            ->whereNotNull('start_cash') // Ensure we are looking for a session record, not just an item
-            ->exists();
-
-        if ($activeSession) {
-            throw new Exception("You already have an active shop session.");
+        // Validasi Stok Dasar
+        if ($data['initial_stock'] <= 0) {
+            throw new Exception("Stok awal harus lebih besar dari 0.");
         }
 
-        return DB::transaction(function () use ($user, $startCash) {
+        return DB::transaction(function () use ($user, $data) {
+            // Logika Perhitungan Markup
+            $basePrice = (float) $data['base_price'];
+            $markupPercent = (int) $data['markup']; 
+            $sellingPrice = $basePrice + ($basePrice * ($markupPercent / 100));
+
+            // Simpan ke database sesuai skema migration
             return DailyConsignment::create([
-                'date' => now(),
-                'input_by_user_id' => $user->id,
-                'start_cash' => $startCash,
-                'status' => 'open',
-                // Explicitly set product fields to null or 0 to distinguish from product items
-                // Though they are nullable now, explicit valid values help.
-                // But since they are nullable, we can omit them.
+                'date'              => now()->toDateString(),
+                'partner_id'        => $data['partner_id'],
+                'input_by_user_id'  => $user->id,
+                'product_name'      => $data['product_name'],
+                'initial_stock'     => (int) $data['initial_stock'],
+                'remaining_stock'   => (int) $data['initial_stock'],
+                'base_price'        => $basePrice,
+                'markup_percentage' => $markupPercent,
+                'selling_price'     => $sellingPrice,
+                'status'            => 'open',
             ]);
         });
     }

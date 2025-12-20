@@ -4,79 +4,59 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyConsignment;
 use App\Models\Partner;
+use App\Actions\Consignment\StartDailyShopAction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class PosController extends Controller
 {
-    /**
-     * Render the POS dashboard.
-     */
-    public function index(): Response
-    {
-        return Inertia::render('Pos/Dashboard', new \App\ViewModels\PosDashboardViewModel());
-    }
 
-    /**
-     * Show form to open shop (start daily session).
-     */
     public function createOpen(): Response
     {
-        return Inertia::render('Pos/OpenShop');
+        return Inertia::render('Pos/OpenShop', [
+            'partners' => Partner::where('is_active', true)
+                ->select(['id', 'name'])
+                ->get()
+        ]);
     }
 
     /**
-     * Store new daily shop session (Start Shop).
+     * Menyimpan data produk konsinyasi baru.
+     * Route: pos.store
      */
-    public function store(Request $request, \App\Actions\Consignment\StartDailyShopAction $startDailyShopAction)
+    public function storeOpen(Request $request, StartDailyShopAction $startDailyShopAction): RedirectResponse
     {
+        // Validasi input dari form Vue
         $validated = $request->validate([
-            'start_cash' => 'required|numeric|min:0',
+            'partner_id'    => 'required|exists:partners,id',
+            'product_name'  => 'required|string|max:255',
+            'initial_stock' => 'required|integer|min:1',
+            'base_price'    => 'required|numeric|min:0',
+            'markup'        => 'required|integer|min:0',
         ]);
 
         try {
-            $startDailyShopAction->execute($request->user(), $validated['start_cash']);
-            return redirect()->route('pos.dashboard')->with('success', 'Shop opened successfully.');
+            // Menjalankan Action untuk menyimpan data
+            $startDailyShopAction->execute($request->user(), $validated);
+
+            // Redirect kembali ke halaman yang sama (atau dashboard) dengan pesan sukses
+            // Menggunakan back() memudahkan jika Anda ingin input banyak barang berturut-turut
+            return redirect()->back()->with('success', 'Produk konsinyasi berhasil ditambahkan!');
+            
         } catch (\Exception $e) {
+            // Mengirim pesan error jika logika bisnis di Action gagal
             return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
     /**
-     * Show form to close shop (reconcile daily session).
+     * Method index dan close tetap ada namun dibuat lebih sederhana 
+     * jika Anda tidak mengurus bagian penutupan toko.
      */
-    public function createClose(): Response
+    public function index(): Response
     {
-        // We might want to pass current session data here using ViewModel or direct query
-        // For now preventing closing if not open is handled by UI or middleware ideally.
-        $session = DailyConsignment::where('input_by_user_id', Auth::id())
-            ->whereNull('closed_at')
-            ->whereNotNull('start_cash')
-            ->firstOrFail();
-
-        return Inertia::render('Pos/CloseShop', [
-            'session' => $session,
-        ]);
-    }
-
-    /**
-     * Update (Close) daily shop session.
-     */
-    public function update(Request $request, DailyConsignment $dailyConsignment, \App\Actions\Consignment\CloseDailyShopAction $closeDailyShopAction)
-    {
-        // Ensure we are closing the session record
-        if ($dailyConsignment->start_cash === null) {
-            abort(404, 'Not a shop session.');
-        }
-
-        $validated = $request->validate([
-            'actual_cash' => 'required|numeric|min:0',
-        ]);
-
-        $closeDailyShopAction->execute($dailyConsignment, $validated['actual_cash']);
-
-        return redirect()->route('pos.dashboard')->with('success', 'Shop closed successfully.');
+        return Inertia::render('Pos/Dashboard');
     }
 }
