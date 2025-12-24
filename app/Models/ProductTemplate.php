@@ -11,14 +11,19 @@ class ProductTemplate extends Model
         'partner_id',
         'name',
         'base_price',
-        'default_markup_percent',
+        'default_selling_price',
+        'is_active',
     ];
 
     protected $casts = [
         'base_price' => 'decimal:2',
-        'default_markup_percent' => 'integer',
+        'default_selling_price' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
 
+    /**
+     * Get the partner that owns this template.
+     */
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->enum('type', ['heavy_meal', 'snack_box']);
             $table->decimal('price', 12, 2);
             $table->json('items_json'); // Array of items: ["Nasi", "Ayam", "Lalapan"]
+            $table->json('template_details')->nullable(); // Flexible config: box_size, options, etc.
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

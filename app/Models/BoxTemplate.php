@@ -12,12 +12,14 @@ class BoxTemplate extends Model
         'type',
         'price',
         'items_json',
+        'template_details',
         'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'items_json' => 'array',
+        'template_details' => 'array',
         'is_active' => 'boolean',
     ];
 
