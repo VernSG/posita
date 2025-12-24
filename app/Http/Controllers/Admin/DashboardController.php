@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AdminDataService;
 use App\Services\BoxOrderService;
+use App\Services\DashboardService;
+use App\Services\ReportService;
 use App\Services\ShopSessionService;
+use App\Models\ShopSession;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,7 +18,9 @@ class DashboardController extends Controller
     public function __construct(
         protected AdminDataService $adminDataService,
         protected BoxOrderService $boxOrderService,
-        protected ShopSessionService $shopSessionService
+        protected ShopSessionService $shopSessionService,
+        protected DashboardService $dashboardService,
+        protected ReportService $reportService
     ) {
     }
 
@@ -35,17 +41,14 @@ class DashboardController extends Controller
         $pendingBoxOrders = $this->boxOrderService->getPendingOrders();
 
         // Get box order statistics
-        $boxOrderStats = $this->boxOrderService->getOrderStatistics([
-            'from_date' => today(),
-            'to_date' => today(),
-        ]);
+        $boxOrderStats = $this->dashboardService->getBoxOrderStats();
+
+        // Get chart data
+        $weeklyRevenue = $this->dashboardService->getWeeklyRevenue();
+        $monthlyRevenue = $this->dashboardService->getMonthlyRevenue();
 
         // Get quick stats
-        $quickStats = [
-            'total_partners' => $this->adminDataService->getPartners(true)->count(),
-            'total_employees' => $this->adminDataService->getUsers('employee')->count(),
-            'active_sessions' => $todaySessions->where('status', 'open')->count(),
-        ];
+        $quickStats = $this->dashboardService->getQuickStats();
 
         return Inertia::render('Admin/Dashboard', [
             'dailySalesTotal' => $dailySalesTotal,
@@ -53,6 +56,43 @@ class DashboardController extends Controller
             'boxOrderStats' => $boxOrderStats,
             'todaySessions' => $todaySessions,
             'quickStats' => $quickStats,
+            'weeklyRevenue' => $weeklyRevenue,
+            'monthlyRevenue' => $monthlyRevenue,
         ]);
+    }
+
+    /**
+     * Download daily sales report.
+     */
+    public function downloadDailyReport(Request $request)
+    {
+        $date = $request->query('date', today()->toDateString());
+
+        $sessions = ShopSession::whereDate('opened_at', $date)
+            ->with(['user', 'consignments.partner'])
+            ->get();
+
+        if ($sessions->isEmpty()) {
+            return back()->withErrors(['error' => 'Tidak ada data untuk tanggal ini.']);
+        }
+
+        $data = [
+            'date' => $date,
+            'sessions' => $sessions,
+            'total_income' => $sessions->sum(fn($s) => $s->consignments->sum('subtotal_income')),
+            'total_sessions' => $sessions->count(),
+            'generated_at' => now(),
+        ];
+
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.daily-sales-report', $data)
+            ->stream('laporan-harian-' . $date . '.pdf');
+    }
+
+    /**
+     * Download session report.
+     */
+    public function downloadSessionReport(ShopSession $session)
+    {
+        return $this->reportService->streamSessionReport($session);
     }
 }
