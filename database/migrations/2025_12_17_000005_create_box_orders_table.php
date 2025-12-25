@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
+     * Box orders with nullable template for custom orders.
      */
     public function up(): void
     {
         Schema::create('box_orders', function (Blueprint $table) {
             $table->id();
             $table->string('customer_name');
-            $table->foreignId('box_template_id')->constrained('box_templates')->cascadeOnDelete();
+            $table->foreignId('box_template_id')->nullable()->constrained('box_templates')->nullOnDelete();
             $table->integer('quantity');
             $table->decimal('total_price', 12, 2);
             $table->datetime('pickup_datetime');

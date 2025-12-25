@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
-     * Creates box_order_items table for flexible line items in box orders.
+     * Line items for box orders (flexible items per order).
      */
     public function up(): void
     {
@@ -21,11 +21,6 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index('box_order_id');
-        });
-
-        // Make box_template_id nullable for custom orders
-        Schema::table('box_orders', function (Blueprint $table) {
-            $table->foreignId('box_template_id')->nullable()->change();
         });
     }
 

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
+     * Product templates for partners with direct selling price.
      */
     public function up(): void
     {
@@ -15,7 +16,7 @@ return new class extends Migration {
             $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
             $table->string('name');
             $table->decimal('base_price', 12, 2);
-            $table->integer('default_markup_percent')->default(10); // 5, 10, or 15
+            $table->decimal('default_selling_price', 12, 2)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

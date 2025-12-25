@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     /**
      * Run the migrations.
+     * Box templates for heavy meals and snack boxes.
      */
     public function up(): void
     {
