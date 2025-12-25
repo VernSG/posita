@@ -1,6 +1,6 @@
 <script setup>
 import EmployeeLayout from '@/Layouts/EmployeeLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { formatMoney } from '@/utils/formatMoney';
 
@@ -18,6 +18,13 @@ const props = defineProps({
 // Countdown timer state
 const countdowns = ref({});
 let intervalId = null;
+
+// Modal state
+const showStatusModal = ref(false);
+const selectedOrder = ref(null);
+const statusForm = useForm({
+    status: '',
+});
 
 // Calculate countdown for each order
 const updateCountdowns = () => {
@@ -76,6 +83,37 @@ const getStatusText = (status) => {
     };
     return texts[status] || status;
 };
+
+// Open status change modal
+const openStatusModal = (order) => {
+    selectedOrder.value = order;
+    statusForm.status = order.status;
+    showStatusModal.value = true;
+};
+
+// Close modal
+const closeStatusModal = () => {
+    showStatusModal.value = false;
+    selectedOrder.value = null;
+    statusForm.reset();
+};
+
+// Submit status change
+const submitStatusChange = () => {
+    statusForm.patch(`/pos/box/${selectedOrder.value.id}/status`, {
+        onSuccess: () => {
+            closeStatusModal();
+        },
+    });
+};
+
+// Available status options
+const statusOptions = [
+    { value: 'pending', label: 'Menunggu', icon: '⏳' },
+    { value: 'paid', label: 'Lunas', icon: '💰' },
+    { value: 'completed', label: 'Selesai', icon: '✅' },
+    { value: 'cancelled', label: 'Batal', icon: '❌' },
+];
 </script>
 
 <template>
@@ -145,9 +183,12 @@ const getStatusText = (status) => {
                                         {{ new Date(order.pickup_datetime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }}
                                     </p>
                                 </div>
-                                <span :class="['px-2 py-1 text-xs rounded-full', getStatusBadge(order.status)]">
-                                    {{ getStatusText(order.status) }}
-                                </span>
+                                <button
+                                    @click="openStatusModal(order)"
+                                    :class="['px-2 py-1 text-xs rounded-full cursor-pointer hover:opacity-80 transition', getStatusBadge(order.status)]"
+                                >
+                                    {{ getStatusText(order.status) }} ▾
+                                </button>
                             </div>
                             
                             <!-- Order Items -->
@@ -202,9 +243,12 @@ const getStatusText = (status) => {
                                     </p>
                                 </div>
                                 <div class="text-right">
-                                    <span :class="['px-2 py-1 text-xs rounded-full', getStatusBadge(order.status)]">
-                                        {{ getStatusText(order.status) }}
-                                    </span>
+                                    <button
+                                        @click="openStatusModal(order)"
+                                        :class="['px-2 py-1 text-xs rounded-full cursor-pointer hover:opacity-80 transition', getStatusBadge(order.status)]"
+                                    >
+                                        {{ getStatusText(order.status) }} ▾
+                                    </button>
                                     <p 
                                         class="text-sm font-medium mt-1"
                                         :class="countdowns[order.id]?.expired ? 'text-red-600' : 'text-blue-600'"
@@ -234,5 +278,52 @@ const getStatusText = (status) => {
                 </div>
             </div>
         </div>
+
+        <!-- Status Change Modal -->
+        <Teleport to="body">
+            <div 
+                v-if="showStatusModal" 
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                @click.self="closeStatusModal"
+            >
+                <div class="bg-white rounded-lg w-full max-w-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-semibold text-gray-800">Ubah Status Order</h3>
+                        <p class="text-sm text-gray-500">{{ selectedOrder?.customer_name }}</p>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <button
+                            v-for="option in statusOptions"
+                            :key="option.value"
+                            @click="statusForm.status = option.value"
+                            :class="[
+                                'w-full p-3 rounded-lg border-2 text-left flex items-center gap-3 transition',
+                                statusForm.status === option.value 
+                                    ? 'border-blue-500 bg-blue-50' 
+                                    : 'border-gray-200 hover:border-gray-300'
+                            ]"
+                        >
+                            <span class="text-xl">{{ option.icon }}</span>
+                            <span class="font-medium">{{ option.label }}</span>
+                        </button>
+                    </div>
+                    <div class="p-4 border-t flex gap-3">
+                        <button
+                            @click="closeStatusModal"
+                            class="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            @click="submitStatusChange"
+                            :disabled="statusForm.processing || statusForm.status === selectedOrder?.status"
+                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {{ statusForm.processing ? 'Menyimpan...' : 'Simpan' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </EmployeeLayout>
 </template>

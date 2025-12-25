@@ -1,7 +1,7 @@
 <script setup>
 import EmployeeLayout from '@/Layouts/EmployeeLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { formatMoney } from '@/utils/formatMoney';
 
 const props = defineProps({
@@ -9,12 +9,44 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    boxTemplates: {
+        type: Array,
+        default: () => [],
+    },
 });
+
+// Selected template ID for dropdown
+const selectedTemplateId = ref('');
 
 const form = useForm({
     customer_name: '',
     pickup_datetime: '',
+    quantity: 1, // Number of boxes to order
     items: [],
+});
+
+// Watch for template selection and auto-fill items
+watch(selectedTemplateId, (newId) => {
+    if (!newId) return;
+    
+    const template = props.boxTemplates.find(t => t.id === parseInt(newId));
+    if (template && template.items_json) {
+        // Clear existing items and add template items
+        form.items = [];
+        
+        // items_json is an array of item names, we need to create item objects
+        const itemNames = Array.isArray(template.items_json) 
+            ? template.items_json 
+            : JSON.parse(template.items_json);
+            
+        itemNames.forEach(itemName => {
+            form.items.push({
+                product_name: itemName,
+                quantity: 1,
+                unit_price: Math.round(template.price / itemNames.length), // Distribute price evenly
+            });
+        });
+    }
 });
 
 // Add a new line item
@@ -31,11 +63,16 @@ const removeItem = (index) => {
     form.items.splice(index, 1);
 };
 
-// Calculate total
-const calculatedTotal = computed(() => {
+// Calculate subtotal (items only)
+const itemsSubtotal = computed(() => {
     return form.items.reduce((sum, item) => {
         return sum + (item.quantity * (item.unit_price || 0));
     }, 0);
+});
+
+// Calculate grand total (items * box quantity)
+const calculatedTotal = computed(() => {
+    return itemsSubtotal.value * (form.quantity || 1);
 });
 
 // Get minimum datetime (now + 1 hour)
@@ -51,6 +88,14 @@ const submit = () => {
             form.reset();
         },
     });
+};
+
+// Clear template selection (for custom order)
+const clearTemplate = () => {
+    selectedTemplateId.value = '';
+    form.items = [];
+    form.quantity = 1;
+    addItem();
 };
 
 // Initialize with one empty item
@@ -70,6 +115,51 @@ if (form.items.length === 0) {
         <div class="max-w-lg mx-auto">
             <div class="bg-white rounded-lg shadow p-6">
                 <form @submit.prevent="submit" class="space-y-4">
+                    <!-- Template Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Template Box (Opsional)
+                        </label>
+                        <div class="flex gap-2">
+                            <select
+                                v-model="selectedTemplateId"
+                                class="flex-1 border rounded-lg px-3 py-2 text-sm"
+                            >
+                                <option value="">-- Pilih Template atau Input Manual --</option>
+                                <optgroup label="Heavy Meal">
+                                    <option 
+                                        v-for="template in boxTemplates.filter(t => t.type === 'heavy_meal')" 
+                                        :key="template.id" 
+                                        :value="template.id"
+                                    >
+                                        {{ template.name }} - {{ formatMoney(template.price) }}
+                                    </option>
+                                </optgroup>
+                                <optgroup label="Snack Box">
+                                    <option 
+                                        v-for="template in boxTemplates.filter(t => t.type === 'snack_box')" 
+                                        :key="template.id" 
+                                        :value="template.id"
+                                    >
+                                        {{ template.name }} - {{ formatMoney(template.price) }}
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <button
+                                v-if="selectedTemplateId"
+                                type="button"
+                                @click="clearTemplate"
+                                class="px-3 py-2 text-sm text-gray-600 hover:text-red-600"
+                                title="Reset ke input manual"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Pilih template untuk auto-fill, atau biarkan kosong untuk input manual
+                        </p>
+                    </div>
+
                     <!-- Customer Name -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -84,6 +174,40 @@ if (form.items.length === 0) {
                         />
                         <p v-if="form.errors.customer_name" class="text-red-500 text-sm mt-1">
                             {{ form.errors.customer_name }}
+                        </p>
+                    </div>
+
+                    <!-- Box Quantity -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Jumlah Box
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <button
+                                type="button"
+                                @click="form.quantity = Math.max(1, form.quantity - 1)"
+                                class="w-10 h-10 bg-gray-100 rounded-lg text-xl font-bold hover:bg-gray-200"
+                            >
+                                −
+                            </button>
+                            <input
+                                v-model.number="form.quantity"
+                                type="number"
+                                min="1"
+                                class="w-20 border rounded-lg px-3 py-2 text-center text-lg font-semibold"
+                                required
+                            />
+                            <button
+                                type="button"
+                                @click="form.quantity++"
+                                class="w-10 h-10 bg-gray-100 rounded-lg text-xl font-bold hover:bg-gray-200"
+                            >
+                                +
+                            </button>
+                            <span class="text-sm text-gray-500">box</span>
+                        </div>
+                        <p v-if="form.errors.quantity" class="text-red-500 text-sm mt-1">
+                            {{ form.errors.quantity }}
                         </p>
                     </div>
 
@@ -108,7 +232,10 @@ if (form.items.length === 0) {
                     <div>
                         <div class="flex justify-between items-center mb-3">
                             <label class="block text-sm font-medium text-gray-700">
-                                Item Pesanan
+                                Item per Box
+                                <span v-if="selectedTemplateId" class="text-xs text-blue-600 ml-1">
+                                    (dari template - bisa diedit)
+                                </span>
                             </label>
                             <button
                                 type="button"
@@ -138,7 +265,7 @@ if (form.items.length === 0) {
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-xs text-gray-500 mb-1">Qty</label>
+                                            <label class="block text-xs text-gray-500 mb-1">Qty/Box</label>
                                             <input
                                                 v-model.number="item.quantity"
                                                 type="number"
@@ -177,9 +304,17 @@ if (form.items.length === 0) {
                         </div>
                     </div>
 
-                    <!-- Total -->
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <div class="flex justify-between items-center">
+                    <!-- Total Summary -->
+                    <div class="bg-blue-50 rounded-lg p-4 space-y-2">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">Harga per Box</span>
+                            <span class="font-medium">{{ formatMoney(itemsSubtotal) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">Jumlah Box</span>
+                            <span class="font-medium">× {{ form.quantity }}</span>
+                        </div>
+                        <div class="border-t pt-2 flex justify-between items-center">
                             <span class="font-medium text-gray-700">Total</span>
                             <span class="text-xl font-bold text-blue-600">
                                 {{ formatMoney(calculatedTotal) }}

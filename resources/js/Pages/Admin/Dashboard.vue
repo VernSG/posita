@@ -9,6 +9,15 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    salesTrend: {
+        type: Object,
+        default: () => ({
+            today: 0,
+            yesterday: 0,
+            trend_percent: 0,
+            trend_direction: 'flat',
+        }),
+    },
     pendingBoxOrders: {
         type: Array,
         default: () => [],
@@ -61,6 +70,21 @@ const getBarHeight = (value, max) => {
                 <p class="text-2xl font-bold text-green-600 mt-2">
                     {{ formatMoney(dailySalesTotal) }}
                 </p>
+                <div class="mt-2 flex items-center gap-1">
+                    <span 
+                        v-if="salesTrend.trend_direction !== 'flat'"
+                        :class="[
+                            'text-sm font-medium flex items-center gap-1',
+                            salesTrend.trend_direction === 'up' ? 'text-green-600' : 'text-red-600'
+                        ]"
+                    >
+                        <span v-if="salesTrend.trend_direction === 'up'">↑</span>
+                        <span v-else>↓</span>
+                        {{ Math.abs(salesTrend.trend_percent) }}%
+                    </span>
+                    <span v-else class="text-sm text-gray-400">— 0%</span>
+                    <span class="text-xs text-gray-400">vs kemarin</span>
+                </div>
             </div>
 
             <div class="bg-white rounded-lg shadow p-6">
