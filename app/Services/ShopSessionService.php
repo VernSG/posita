@@ -104,18 +104,31 @@ class ShopSessionService
         $session->refresh();
         $summary = $this->calculateClosingSummary($session);
 
-        // Calculate discrepancy
-        $discrepancy = $actualCash - $summary['expected_cash'];
+        // Calculate discrepancy: positive = shortage (kurang), negative = overage (lebih)
+        // Formula: expected_cash - actual_cash
+        $systemCalculation = $summary['expected_cash'];
+        $discrepancy = $systemCalculation - $actualCash;
+
+        // Determine discrepancy status
+        $discrepancyStatus = '';
+        if ($discrepancy > 0) {
+            $discrepancyStatus = ' (Kurang/Shortage)';
+        } elseif ($discrepancy < 0) {
+            $discrepancyStatus = ' (Lebih/Overage)';
+        } else {
+            $discrepancyStatus = ' (Pas)';
+        }
 
         // Generate notes
         $closingNotes = sprintf(
-            "Total Pendapatan: Rp %s\nTotal Profit: Rp %s\nKas Awal: Rp %s\nKas Akhir Sistem: Rp %s\nKas Akhir Aktual: Rp %s\nSelisih: Rp %s%s",
+            "Total Pendapatan: Rp %s\nTotal Profit: Rp %s\nKas Awal: Rp %s\nKas Akhir Sistem: Rp %s\nKas Akhir Aktual: Rp %s\nSelisih: Rp %s%s%s",
             number_format((float) ($summary['total_income'] ?? 0), 0, ',', '.'),
             number_format((float) ($summary['total_profit'] ?? 0), 0, ',', '.'),
             number_format((float) ($session->opening_cash ?? 0), 0, ',', '.'),
-            number_format((float) ($summary['expected_cash'] ?? 0), 0, ',', '.'),
+            number_format((float) ($systemCalculation ?? 0), 0, ',', '.'),
             number_format((float) ($actualCash ?? 0), 0, ',', '.'),
-            number_format((float) ($discrepancy ?? 0), 0, ',', '.'),
+            number_format((float) abs($discrepancy ?? 0), 0, ',', '.'),
+            $discrepancyStatus,
             $notes ? "\nCatatan: " . $notes : ''
         );
 

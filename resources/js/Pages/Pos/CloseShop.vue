@@ -77,9 +77,10 @@ const calculatedTotals = computed(() => {
     };
 });
 
+// Cash difference: expected - actual (positive = kurang/shortage, negative = lebih/overage)
 const cashDifference = computed(() => {
     if (!form.actual_cash) return 0;
-    return parseFloat(form.actual_cash) - calculatedTotals.value.expected_cash;
+    return calculatedTotals.value.expected_cash - parseFloat(form.actual_cash);
 });
 
 const submit = () => {
@@ -238,11 +239,11 @@ const validateLeftover = (item) => {
                         </div>
 
                         <!-- Cash Difference -->
-                        <div v-if="form.actual_cash" class="p-3 rounded-lg" :class="cashDifference >= 0 ? 'bg-green-50' : 'bg-red-50'">
-                            <p class="text-sm" :class="cashDifference >= 0 ? 'text-green-800' : 'text-red-800'">
-                                Selisih: {{ formatMoney(cashDifference) }}
-                                <span v-if="cashDifference > 0">(Lebih)</span>
-                                <span v-else-if="cashDifference < 0">(Kurang)</span>
+                        <div v-if="form.actual_cash" class="p-3 rounded-lg" :class="cashDifference <= 0 ? 'bg-green-50' : 'bg-red-50'">
+                            <p class="text-sm" :class="cashDifference <= 0 ? 'text-green-800' : 'text-red-800'">
+                                Selisih: {{ formatMoney(Math.abs(cashDifference)) }}
+                                <span v-if="cashDifference > 0">(Kurang)</span>
+                                <span v-else-if="cashDifference < 0">(Lebih)</span>
                                 <span v-else>(Pas)</span>
                             </p>
                         </div>
