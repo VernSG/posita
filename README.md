@@ -1,290 +1,156 @@
-# POSITA - Point of Sales & Consignment Management System
+# 🛒 Posita - Sistem Point of Sales
+
+Aplikasi **Point of Sales (POS)** berbasis web untuk manajemen penjualan harian, stok konsinyasi, dan pemesanan box catering. Dibangun menggunakan arsitektur modern dengan Laravel + Vue.js + Inertia.js.
 
 ---
 
-## 1. 📋 Project Overview
+## 📋 Project Overview
 
-**Posita** adalah sistem aplikasi Point of Sale (POS) berbasis web yang dirancang khusus untuk manajemen usaha dengan model konsinyasi (titip jual) dan penyewaan box (box rental). 
-
-### Fitur Utama
-
-| Modul | Deskripsi |
-| :--- | :--- |
-| **Buka Toko (Open Shop)** | Memulai sesi kasir dengan input kas awal dan pemilihan barang konsinyasi dari mitra |
-| **Tutup Toko (Close Shop)** | Menutup sesi dengan input sisa stok, kalkulasi revenue/profit, dan rekonsiliasi kas |
-| **Order Box** | Manajemen pemesanan box dengan countdown pengambilan, upload bukti bayar, dan kwitansi |
-| **Admin Dashboard** | Statistik penjualan dengan grafik tren (harian/mingguan/bulanan), riwayat sesi, dan order |
-| **Manajemen Partner** | Pengelolaan data mitra konsinyasi beserta produk template mereka |
-| **Laporan** | Generate PDF laporan harian dan per-sesi dengan detail konsinyasi |
+Posita adalah sistem kasir digital yang dirancang untuk:
+- **Manajemen Sesi Toko** - Buka/tutup toko dengan pencatatan kas awal & akhir
+- **Sistem Konsinyasi** - Pelacakan stok titipan dari mitra/supplier
+- **Pemesanan Box Catering** - Kelola pesanan nasi box dan snack box dengan countdown timer
+- **Dashboard Admin** - Analitik penjualan, tren revenue, dan laporan harian
 
 ---
 
-## 2. 💻 Technology Stack Requirements
+## 🛠️ Tech Stack
 
-Project ini dibangun menggunakan teknologi modern:
+| Teknologi | Versi | Fungsi |
+|-----------|-------|--------|
+| **Laravel** | 11.x | Backend Framework & API |
+| **Vue.js** | 3.x | Frontend Framework (Composition API) |
+| **Inertia.js** | 2.x | SPA Bridge (tanpa API terpisah) |
+| **Tailwind CSS** | 3.x | Utility-first CSS Framework |
+| **MySQL** | 8.x | Database |
+| **Vite** | 5.x | Build Tool & Dev Server |
 
-| Kategori | Teknologi | Versi |
-| :--- | :--- | :--- |
-| **Backend Framework** | Laravel | 11.x |
-| **Frontend Framework** | Vue.js (Composition API) | 3.x |
-| **Routing/Glue** | Inertia.js | 2.x |
-| **Styling** | Tailwind CSS | 3.x |
-| **Database** | MySQL / MariaDB | 8.x / 10.x |
-| **Build Tool** | Vite | 5.x |
-| **Package Manager** | Composer, NPM | - |
-| **PDF Generator** | barryvdh/laravel-dompdf | - |
-| **Activity Logging** | spatie/laravel-activitylog | - |
+---
 
-### Prasyarat Sistem
+## 🚀 Instalasi
+
+### Prasyarat
 - PHP >= 8.2
-- Composer >= 2.x
-- Node.js >= 18.x & NPM
-- MySQL 8.x / MariaDB 10.x
-- Git
+- Composer
+- Node.js >= 18
+- MySQL 8.x
 
----
+### Langkah Instalasi
 
-## 3. 📦 Step by Step Installation
-
-### Langkah 1: Clone Repository
 ```bash
+# 1. Clone repository
 git clone https://github.com/username/posita.git
 cd posita
-```
 
-### Langkah 2: Install Backend Dependencies
-```bash
+# 2. Install dependencies PHP
 composer install
-```
 
-### Langkah 3: Install Frontend Dependencies
-```bash
+# 3. Install dependencies Node.js
 npm install
-```
 
-### Langkah 4: Konfigurasi Environment
-Salin file `.env.example` menjadi `.env`:
-```bash
+# 4. Copy file environment
 cp .env.example .env
-```
 
-Buka file `.env` dan sesuaikan konfigurasi database:
-```ini
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=posita_db
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
-
-### Langkah 5: Generate App Key
-```bash
+# 5. Generate application key
 php artisan key:generate
-```
 
-### Langkah 6: Migrasi Database
-```bash
-php artisan migrate
-```
+# 6. Konfigurasi database di .env
+# DB_DATABASE=posita
+# DB_USERNAME=root
+# DB_PASSWORD=
 
-### Langkah 7: Seed Data Demo (Opsional)
-Untuk mengisi database dengan data demo:
-```bash
-php artisan db:seed
-```
-
-Atau untuk reset dan seed ulang:
-```bash
+# 7. Jalankan migrasi dan seeder
 php artisan migrate:fresh --seed
-```
 
-Untuk data tren 30 hari (untuk testing dashboard):
-```bash
-php artisan db:seed --class=TrendSeeder
-```
-
-### Langkah 8: Link Storage
-```bash
-php artisan storage:link
-```
-
-### Langkah 9: Jalankan Aplikasi
-Buka dua terminal terpisah:
-
-**Terminal 1 (Backend Server):**
-```bash
+# 8. Jalankan development server
 php artisan serve
-```
-
-**Terminal 2 (Frontend Hot-Reload):**
-```bash
 npm run dev
 ```
 
-### Langkah 10: Akses Aplikasi
-Buka browser dan kunjungi: `http://localhost:8000`
-
-### Demo Account
+### Akun Default
 | Role | Email | Password |
-| :--- | :--- | :--- |
-| **Administrator** | `admin@posita.com` | `password` |
-| **Kasir (Staff)** | `kasir1@posita.com` | `password` |
+|------|-------|----------|
+| Admin | `admin@posita.com` | `password` |
+| Kasir | `rivaldi@posita.com` | `password` |
 
 ---
 
-## 4. 👥 Task Allocation
+## 👥 Pembagian Tugas Tim (Feature Breakdown)
 
-### Nurita — Open Shop Feature (Buka Toko)
-Semua item yang terkait fitur **Buka Toko**:
+### Nurita — Fitur: Open Shop
+> Menangani proses pembukaan sesi toko harian dan input saldo awal kas.
 
-**Controllers:**
-- `app/Http/Controllers/Pos/ShopSessionController.php` → method `open()`, `storeOpen()`
-- `app/Http/Controllers/Pos/PosController.php` → method `index()` untuk redirect logic
-
-**Services:**
-- `app/Services/ShopSessionService.php` → method `startSession()`, `getActiveSession()`, `hasActiveSession()`
-
-**Actions:**
-- `app/Actions/StartDailyShopAction.php` → logic memulai sesi dengan barang konsinyasi
-
-**Models:**
-- `app/Models/ShopSession.php` → status 'open', relasi ke user dan consignments
-- `app/Models/DailyConsignment.php` → menyimpan barang konsinyasi per sesi
-- `app/Models/Partner.php` → data mitra
-- `app/Models/ProductTemplate.php` → template produk mitra
-
-**Frontend:**
-- `resources/js/Pages/Pos/OpenShop.vue` → form input kas awal dan pilih barang konsinyasi
-- `resources/js/Pages/Pos/Index.vue` → halaman utama POS setelah sesi aktif
-
-**Migrations:**
-- `database/migrations/*_create_shop_sessions_table.php`
-- `database/migrations/*_create_daily_consignments_table.php`
-- `database/migrations/*_create_partners_table.php`
-- `database/migrations/*_create_product_templates_table.php`
+| Layer | File |
+|-------|------|
+| **Controller** | `app/Http/Controllers/Pos/ShopSessionController.php` → `create()`, `store()` |
+| **Service** | `app/Services/ShopSessionService.php` → `startSession()` |
+| **View** | `resources/js/Pages/Pos/OpenShop.vue` |
+| **Model** | `app/Models/ShopSession.php` |
 
 ---
 
-### Amar — Close Shop Feature (Tutup Toko)
-Semua item yang terkait fitur **Tutup Toko**:
+### Amar — Fitur: Close Shop
+> Menangani penutupan toko, rekapitulasi uang fisik, dan generate laporan akhir sesi.
 
-**Controllers:**
-- `app/Http/Controllers/Pos/ShopSessionController.php` → method `close()`, `storeClose()`
-
-**Services:**
-- `app/Services/ShopSessionService.php` → method `closeSession()`, `calculateClosingSummary()`
-- `app/Services/ConsignmentService.php` → method `updateSoldQuantity()`
-
-**Actions:**
-- `app/Actions/CloseDailyShopAction.php` → logic kalkulasi akhir dan tutup sesi
-
-**Models:**
-- `app/Models/ShopSession.php` → status 'closed', field `closing_cash_system`, `closing_cash_actual`, `notes`
-- `app/Models/DailyConsignment.php` → field `qty_sold`, `qty_remaining`, `subtotal_income`
-
-**Frontend:**
-- `resources/js/Pages/Pos/CloseShop.vue` → form input sisa stok, kas aktual, kalkulasi selisih
-
-**Logic Kalkulasi:**
-- Revenue: `qty_sold × selling_price`
-- Profit: `qty_sold × (selling_price - base_price)`
-- Cash Discrepancy: `expected_cash - actual_cash` (positif = kurang, negatif = lebih)
+| Layer | File |
+|-------|------|
+| **Controller** | `app/Http/Controllers/Pos/ShopSessionController.php` → `showClose()`, `close()` |
+| **Service** | `app/Services/ShopSessionService.php` → `closeSession()`, `calculateClosingSummary()` |
+| **Request** | `app/Http/Requests/CloseDailyShopRequest.php` |
+| **View** | `resources/js/Pages/Pos/CloseShop.vue` |
+| **Component** | `resources/js/Pages/Pos/Partials/CloseShopItem.vue` |
 
 ---
 
-### Rivaldi — Box Order Feature (Order Box)
-Semua item yang terkait fitur **Order Box**:
+### Rivaldi — Fitur: Box Order
+> Menangani transaksi penjualan box catering, pemilihan template, dan kalkulasi harga.
 
-**Controllers:**
-- `app/Http/Controllers/Pos/BoxOrderController.php` → method `index()`, `create()`, `store()`, `uploadProof()`, `updateStatus()`, `downloadReceipt()`
-
-**Services:**
-- `app/Services/BoxOrderService.php` → method `createOrder()`, `uploadPaymentProof()`, `updateOrderStatus()`, `cancelOrderWithReason()`, `generateReceipt()`
-
-**Models:**
-- `app/Models/BoxOrder.php` → status enum ['pending', 'paid', 'completed', 'cancelled'], `cancellation_reason`
-- `app/Models/BoxOrderItem.php` → line items per order
-- `app/Models/BoxTemplate.php` → template box (heavy_meal, snack_box)
-
-**Frontend:**
-- `resources/js/Pages/Pos/Box/Index.vue` → list order, countdown timer, status modal, notifikasi otomatis
-- `resources/js/Pages/Pos/Box/Create.vue` → form pembuatan order baru
-
-**Views (PDF):**
-- `resources/views/reports/box-receipt.blade.php` → template kwitansi
-
-**Migrations:**
-- `database/migrations/*_create_box_orders_table.php`
-- `database/migrations/*_create_box_order_items_table.php`
-- `database/migrations/*_create_box_templates_table.php`
-- `database/migrations/*_add_cancellation_reason_to_box_orders_table.php`
-
-**Routes:**
-- `/pos/box` → index
-- `/pos/box/create` → create form
-- `/pos/box` (POST) → store
-- `/pos/box/{id}/status` (PATCH) → update status
-- `/pos/box/{id}/receipt` → download kwitansi
+| Layer | File |
+|-------|------|
+| **Controller** | `app/Http/Controllers/Pos/BoxOrderController.php` |
+| **Service** | `app/Services/BoxOrderService.php` |
+| **View** | `resources/js/Pages/Pos/Box/Index.vue`, `resources/js/Pages/Pos/Box/Create.vue` |
+| **Model** | `app/Models/BoxOrder.php`, `app/Models/BoxOrderItem.php`, `app/Models/BoxTemplate.php` |
 
 ---
 
-### Belva — Remaining Project Implementation
-Implementasi sisa proyek meliputi:
+### Belva — System Setup & Admin Dashboard
+> Setup instalasi awal, konfigurasi database, arsitektur backend, dan dashboard admin.
 
-**Admin Dashboard:**
-- `app/Http/Controllers/Admin/DashboardController.php`
-- `app/Services/DashboardService.php` → `getSalesTrend()`, `getSalesComparison()`, `getGlobalProfit()`, `getSessionHistory()`, `getBoxOrderHistory()`
-- `resources/js/Pages/Admin/Dashboard.vue` → line chart, filter tabs, riwayat sesi/order, detail modal
-
-**Partner & User Management:**
-- `app/Http/Controllers/Admin/PartnerController.php`
-- `app/Http/Controllers/Admin/UserManagementController.php`
-- `app/Http/Controllers/Admin/BoxTemplateController.php`
-
-**Reporting System:**
-- `app/Services/ReportService.php` → generate PDF laporan
-- `resources/views/reports/*.blade.php` → templates PDF
-
-**Database Optimization:**
-- Migrasi dengan indexing: `database/migrations/*_add_performance_indexes.php`
-- Seeder demo: `database/seeders/DatabaseSeeder.php`, `TrendSeeder.php`
-
-**UI/Layouts:**
-- `resources/js/Layouts/AdminLayout.vue`
-- `resources/js/Layouts/EmployeeLayout.vue`
-- `resources/js/Components/*.vue`
-- `resources/js/utils/formatMoney.js`
-
-**Authentication & Middleware:**
-- Role-based routing di `bootstrap/app.php`
-- Middleware logic untuk redirect berdasarkan role
+| Layer | File |
+|-------|------|
+| **Routes** | `routes/web.php` |
+| **Seeders** | `database/seeders/DatabaseSeeder.php`, `UserSeeder.php`, `PartnerSeeder.php`, dll. |
+| **Config** | `composer.json`, `package.json`, `tailwind.config.js` |
+| **Admin Controller** | `app/Http/Controllers/Admin/DashboardController.php` |
+| **Admin Service** | `app/Services/AdminDataService.php`, `app/Services/DashboardService.php` |
+| **Admin View** | `resources/js/Layouts/AdminLayout.vue`, `resources/js/Pages/Admin/Dashboard.vue` |
 
 ---
 
-## 📁 Project Structure
+## 📁 Struktur Folder Utama
 
 ```
 posita/
 ├── app/
-│   ├── Actions/          # Business actions (StartDailyShopAction, CloseDailyShopAction)
-│   ├── Http/Controllers/ # Admin & Pos controllers
-│   ├── Models/           # Eloquent models
-│   └── Services/         # Business logic services
+│   ├── Http/Controllers/
+│   │   ├── Admin/          # Controller untuk admin panel
+│   │   └── Pos/            # Controller untuk kasir/POS
+│   ├── Models/             # Eloquent Models
+│   └── Services/           # Business Logic Layer
 ├── database/
-│   ├── migrations/       # Database schema
-│   └── seeders/          # Demo data
-├── resources/
-│   ├── js/
-│   │   ├── Layouts/      # Admin & Employee layouts
-│   │   ├── Pages/        # Vue pages (Admin/, Pos/)
-│   │   └── utils/        # Helper functions
-│   └── views/
-│       └── reports/      # PDF templates
+│   ├── migrations/         # Database schema
+│   └── seeders/            # Data dummy untuk development
+├── resources/js/
+│   ├── Components/         # Reusable Vue components
+│   ├── Layouts/            # AdminLayout, EmployeeLayout
+│   └── Pages/              # Halaman Inertia (Pos/, Admin/)
 └── routes/
-    └── web.php           # Application routes
+    └── web.php             # Route definitions
 ```
 
 ---
 
-*© 2024/2025 Posita Development Team.*
+## 📄 License
+
+MIT License - Silakan gunakan dan modifikasi sesuai kebutuhan.
